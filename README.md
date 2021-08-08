@@ -20,6 +20,16 @@ unite! {
 }
 ```
 
+This expands to:
+
+```rust
+pub enum Any {
+    One(One),
+    Two(Two),
+    Three(Three),
+}
+```
+
 ### Renaming
 By default the enum variants use the same name as the type, but renaming is possible.
 
