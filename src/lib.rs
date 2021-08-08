@@ -34,13 +34,13 @@ pub fn unite(input: TokenStream) -> TokenStream {
         attributes,
         visibility,
         name,
-        kinds,
+        variants,
     } = parse_macro_input!(input as Enum);
 
-    // generate type information for all enum kinds
-    let full_kinds = kinds
+    // generate type information for all enum variants
+    let variants_data = variants
         .into_iter()
-        .map(|Kind { name, ty }| {
+        .map(|Variant { name, ty }| {
             let ty = if let Some(ty) = &ty {
                 quote! { #ty }
             } else {
@@ -50,43 +50,45 @@ pub fn unite(input: TokenStream) -> TokenStream {
         })
         .collect::<Vec<_>>();
 
-    // generate enum kinds
-    let kinds = full_kinds.iter().map(|(kind, ty)| quote! { #kind(#ty) });
+    // generate enum variants
+    let variants = variants_data
+        .iter()
+        .map(|(variant, ty)| quote! { #variant(#ty) });
 
-    // generate cast functions
-    let funcs = full_kinds.iter().map(|(kind, ty)| {
-        let snake_case = kind.to_string().to_snake_case();
+    // generate helper functions
+    let funcs = variants_data.iter().map(|(variant, ty)| {
+        let snake_case = variant.to_string().to_snake_case();
 
         let is_name = format_ident!("is_{}", snake_case);
         let is_doc = format!(
-            "Checks whether this [`{name}`] is a [`{kind}`]({name}::{kind}).",
+            "Checks whether this [`{name}`] is a [`{variant}`]({name}::{variant}).",
             name = name,
-            kind = kind
+            variant = variant
         );
 
         let as_name = format_ident!("as_{}", snake_case);
         let as_doc = format!(
-            "Attempts to cast this [`{name}`] to a reference to the underlying [`{kind}`]({name}::{kind}).",
+            "Attempts to cast this [`{name}`] to a reference to the underlying [`{variant}`]({name}::{variant}).",
             name = name,
-            kind = kind,
+            variant = variant,
         );
 
         let as_mut_name = format_ident!("as_{}_mut", snake_case);
         let as_mut_doc = format!(
-            "Attempts to cast this [`{name}`] to a mutable reference to the underlying [`{kind}`]({name}::{kind}).",
+            "Attempts to cast this [`{name}`] to a mutable reference to the underlying [`{variant}`]({name}::{variant}).",
             name = name,
-            kind = kind,
+            variant = variant,
         );
 
         quote! {
             #[doc = #is_doc]
             pub fn #is_name(&self) -> bool {
-                matches!(self, #name::#kind(_))
+                matches!(self, #name::#variant(_))
             }
 
             #[doc = #as_doc]
             pub fn #as_name(&self) -> Option<&#ty> {
-                if let #name::#kind(contents) = self {
+                if let #name::#variant(contents) = self {
                     Some(contents)
                 } else {
                     None
@@ -95,7 +97,7 @@ pub fn unite(input: TokenStream) -> TokenStream {
 
             #[doc = #as_mut_doc]
             pub fn #as_mut_name(&mut self) -> Option<&mut #ty> {
-                if let #name::#kind(contents) = self {
+                if let #name::#variant(contents) = self {
                     Some(contents)
                 } else {
                     None
@@ -108,7 +110,7 @@ pub fn unite(input: TokenStream) -> TokenStream {
     let result = quote! {
         #(#attributes)*
         #visibility enum #name {
-            #(#kinds),*
+            #(#variants),*
         }
 
         impl #name {
@@ -123,7 +125,7 @@ struct Enum {
     attributes: Vec<Attribute>,
     visibility: Visibility,
     name: Ident,
-    kinds: Punctuated<Kind, Token![,]>,
+    variants: Punctuated<Variant, Token![,]>,
 }
 
 impl Parse for Enum {
@@ -135,23 +137,23 @@ impl Parse for Enum {
 
         let inner;
         braced!(inner in input);
-        let kinds = inner.parse_terminated(Kind::parse)?;
+        let variants = inner.parse_terminated(Variant::parse)?;
 
         Ok(Self {
             attributes,
             visibility,
             name,
-            kinds,
+            variants,
         })
     }
 }
 
-struct Kind {
+struct Variant {
     name: Ident,
     ty: Option<Type>,
 }
 
-impl Parse for Kind {
+impl Parse for Variant {
     fn parse(input: ParseStream) -> syn::Result<Self> {
         let name = input.parse()?;
         let ty = if input.peek(Token![=]) {
