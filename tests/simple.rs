@@ -36,7 +36,7 @@ fn checks() {
 }
 
 #[test]
-fn casting() {
+fn casts() {
     assert_eq!(FOO.as_foo(), Some(&Foo(0)));
     assert_eq!(FOO.as_baz(), None);
     assert_eq!(FOO.as_void(), None);
@@ -48,4 +48,21 @@ fn casting() {
     assert_eq!(VOID.as_foo(), None);
     assert_eq!(VOID.as_baz(), None);
     assert_eq!(VOID.as_void(), Some(&()));
+}
+
+#[test]
+fn casts_mut() {
+    #![allow(const_item_mutation)]
+
+    assert_eq!(FOO.as_foo_mut(), Some(&mut Foo(0)));
+    assert_eq!(FOO.as_baz_mut(), None);
+    assert_eq!(FOO.as_void_mut(), None);
+
+    assert_eq!(BAZ.as_foo_mut(), None);
+    assert_eq!(BAZ.as_baz_mut(), Some(&mut Bar(true)));
+    assert_eq!(BAZ.as_void_mut(), None);
+
+    assert_eq!(VOID.as_foo_mut(), None);
+    assert_eq!(VOID.as_baz_mut(), None);
+    assert_eq!(VOID.as_void_mut(), Some(&mut ()));
 }
