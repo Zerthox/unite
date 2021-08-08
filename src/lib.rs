@@ -40,23 +40,32 @@ pub fn unite(input: TokenStream) -> TokenStream {
     // generate type information for all enum variants
     let variants_data = variants
         .into_iter()
-        .map(|Variant { name, ty }| {
-            let ty = if let Some(ty) = &ty {
-                quote! { #ty }
-            } else {
-                quote! { #name }
-            };
-            (name, ty)
-        })
+        .map(
+            |Variant {
+                 attributes,
+                 name,
+                 ty,
+             }| {
+                let ty = if let Some(ty) = &ty {
+                    quote! { #ty }
+                } else {
+                    quote! { #name }
+                };
+                (attributes, name, ty)
+            },
+        )
         .collect::<Vec<_>>();
 
     // generate enum variants
-    let variants = variants_data
-        .iter()
-        .map(|(variant, ty)| quote! { #variant(#ty) });
+    let variants = variants_data.iter().map(|(attributes, variant, ty)| {
+        quote! {
+            #(#attributes)*
+            #variant(#ty)
+        }
+    });
 
     // generate helper functions
-    let funcs = variants_data.iter().map(|(variant, ty)| {
+    let funcs = variants_data.iter().map(|(_, variant, ty)| {
         let snake_case = variant.to_string().to_snake_case();
 
         let is_name = format_ident!("is_{}", snake_case);
@@ -149,12 +158,14 @@ impl Parse for Enum {
 }
 
 struct Variant {
+    attributes: Vec<Attribute>,
     name: Ident,
     ty: Option<Type>,
 }
 
 impl Parse for Variant {
     fn parse(input: ParseStream) -> syn::Result<Self> {
+        let attributes = input.call(Attribute::parse_outer)?;
         let name = input.parse()?;
         let ty = if input.peek(Token![=]) {
             input.parse::<Token![=]>()?;
@@ -162,6 +173,10 @@ impl Parse for Variant {
         } else {
             None
         };
-        Ok(Self { name, ty })
+        Ok(Self {
+            attributes,
+            name,
+            ty,
+        })
     }
 }

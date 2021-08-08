@@ -9,6 +9,7 @@ struct Bar(bool);
 unite! {
     /// Test enum.
     enum Test {
+        /// Foo variant.
         Foo,
         Baz = Bar,
         Void = (),
