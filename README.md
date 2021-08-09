@@ -42,7 +42,7 @@ unite! {
 }
 ```
 
-### Helper functions
+### Helpers
 The generated enums come with helper functions to access their variants with ease.
 Variant names are automatically converted into `snake_case` for the function names.
 
@@ -55,4 +55,10 @@ fn foo(any: Any) {
     let as_two: Option<&Two> = any.as_two();
     let as_three_mut: Option<&mut Three> = any.as_three_mut();
 }
+```
+
+The generated enums also inherently implement `From<Variant>`.
+
+```rust
+let any: Any = One(true).into();
 ```

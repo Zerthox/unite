@@ -1,6 +1,6 @@
 [package]
 name = "unite"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 authors = ["Zerthox <zerthox@gmail.com>"]
 description = "A helper macro to compose existing types into an enum"

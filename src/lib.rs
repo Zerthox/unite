@@ -66,8 +66,10 @@ pub fn unite(input: TokenStream) -> TokenStream {
 
     // generate helper functions
     let funcs = variants_data.iter().map(|(_, variant, ty)| {
+        // convert name to snake case
         let snake_case = variant.to_string().to_snake_case();
 
+        // generate is check name & doc
         let is_name = format_ident!("is_{}", snake_case);
         let is_doc = format!(
             "Checks whether this [`{name}`] is a [`{variant}`]({name}::{variant}).",
@@ -75,6 +77,7 @@ pub fn unite(input: TokenStream) -> TokenStream {
             variant = variant
         );
 
+        // generate as cast name & doc
         let as_name = format_ident!("as_{}", snake_case);
         let as_doc = format!(
             "Attempts to cast this [`{name}`] to a reference to the underlying [`{variant}`]({name}::{variant}).",
@@ -82,6 +85,7 @@ pub fn unite(input: TokenStream) -> TokenStream {
             variant = variant,
         );
 
+        // generate as mut cast name & doc
         let as_mut_name = format_ident!("as_{}_mut", snake_case);
         let as_mut_doc = format!(
             "Attempts to cast this [`{name}`] to a mutable reference to the underlying [`{variant}`]({name}::{variant}).",
@@ -115,6 +119,17 @@ pub fn unite(input: TokenStream) -> TokenStream {
         }
     });
 
+    // generate helper impls
+    let impls = variants_data.iter().map(|(_, variant, ty)| {
+        quote! {
+            impl From<#ty> for #name {
+                fn from(inner: #ty) -> Self {
+                    Self::#variant(inner)
+                }
+            }
+        }
+    });
+
     // generate result enum
     let result = quote! {
         #(#attributes)*
@@ -125,6 +140,8 @@ pub fn unite(input: TokenStream) -> TokenStream {
         impl #name {
             #(#funcs)*
         }
+
+        #(#impls)*
     };
 
     TokenStream::from(result)

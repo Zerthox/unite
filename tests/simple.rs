@@ -8,6 +8,7 @@ struct Bar(bool);
 
 unite! {
     /// Test enum.
+    #[derive(Debug, Clone, PartialEq, Eq)]
     enum Test {
         /// Foo variant.
         Foo,
@@ -65,4 +66,10 @@ fn casts_mut() {
     assert_eq!(VOID.as_foo_mut(), None);
     assert_eq!(VOID.as_baz_mut(), None);
     assert_eq!(VOID.as_void_mut(), Some(&mut ()));
+}
+
+#[test]
+fn convert() {
+    assert_eq!(Into::<Test>::into(Foo(1)), Test::Foo(Foo(1)));
+    assert_eq!(Into::<Test>::into(Bar(false)), Test::Baz(Bar(false)));
 }
