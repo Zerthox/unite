@@ -1,12 +1,12 @@
 # Unite
 A small helper macro allowing you to compose existing types into an enum.
 
-## Usage
 ```toml
 [dependencies]
-unite = { git = "https://github.com/zerthox/unite", branch = "master" }
+unite = "0.1"
 ```
 
+## Usage
 ```rust
 use unite::unite;
 

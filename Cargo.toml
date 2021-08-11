@@ -4,7 +4,9 @@ version = "0.1.2"
 edition = "2018"
 authors = ["Zerthox <zerthox@gmail.com>"]
 description = "A helper macro to compose existing types into an enum"
+homepage = "https://github.com/zerthox/unite"
 repository = "https://github.com/zerthox/unite"
+license = "MIT"
 
 [lib]
 proc-macro = true

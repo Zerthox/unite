@@ -1,3 +1,22 @@
+//! This crate provides the [`unite!`](macro.unite.html) macro to easily compose existing types into an enum.
+//!
+//! ```toml
+//! [dependencies]
+//! unite = "0.1"
+//! ```
+//!
+//! # Usage
+//! ```
+//! use unite::unite;
+//!
+//! struct A;
+//! struct B;
+//!
+//! unite! {
+//!     enum Any { A, B, C = i32 }
+//! }
+//! ```
+
 use heck::SnakeCase;
 use proc_macro::TokenStream;
 use quote::{format_ident, quote};
@@ -9,23 +28,77 @@ use syn::{
     Attribute, Ident, Token, Type, Visibility,
 };
 
-/// Helper macro to compose types into an enum.
+/// Helper macro to compose existing types into an enum.
 ///
 /// # Examples
 /// ```
 /// use unite::unite;
 ///
-/// struct A;
-/// struct B;
+/// pub struct One(bool);
+/// pub struct Two(i32);
+/// pub struct Three(f64);
 ///
 /// unite! {
-///     /// Combination of A, B & i32 renamed to C.
-///     pub enum Together {
-///         A,
-///         B,
-///         C = i32,
+///     /// A new enum with a variant for each struct.
+///     pub enum Any { One, Two, Three }
+/// }
+/// ```
+///
+/// This expands to:
+///
+/// ```
+/// # struct One;
+/// # struct Two;
+/// # struct Three;
+/// pub enum Any {
+///     One(One),
+///     Two(Two),
+///     Three(Three),
+/// }
+/// ```
+///
+/// ## Renaming
+/// By default the enum variants use the same name as the type, but renaming is possible.
+///
+/// ```
+/// # use unite::unite;
+/// # struct SameName;
+/// unite! {
+///     enum Foo {
+///         SameName,
+///         Renamed = i32,
 ///     }
 /// }
+/// ```
+///
+/// ## Helpers
+/// The generated enums come with helper functions to access their variants with ease.
+/// Variant names are automatically converted into `snake_case` for the function names.
+///
+/// ```
+/// # struct One;
+/// # struct Two;
+/// # struct Three;
+/// # unite::unite! { enum Any { One, Two, Three } }
+/// let mut any: Any;
+/// # any = Any::One(One);
+///
+/// // checks whether the enum is a specific variant
+/// let is_one: bool = any.is_one();
+///
+/// // attempts to cast the enum to a specific variant
+/// let as_two: Option<&Two> = any.as_two();
+/// let as_three_mut: Option<&mut Three> = any.as_three_mut();
+/// ```
+///
+/// The generated enums also inherently implement [`From<Variant>`].
+///
+/// ```
+/// # struct One(bool);
+/// # struct Two(i32);
+/// # struct Three(f64);
+/// # unite::unite! { enum Any { One, Two, Three } }
+/// let any: Any = One(true).into();
 /// ```
 #[proc_macro]
 pub fn unite(input: TokenStream) -> TokenStream {
